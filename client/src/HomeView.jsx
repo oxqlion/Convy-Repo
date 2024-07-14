@@ -11,11 +11,25 @@ import Footer from "./components/Footer";
 import { FaStar } from "react-icons/fa";
 import "./index.css";
 import CourseCardBig from "./components/CourseCardBig";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useUser } from "./UserContext";
 
 const Home = () => {
-
+  const { setUser } = useUser()
+  const navigate = useNavigate()
   const [allCourse, setAllCourse] = useState([]);
+
+  useEffect(() => {
+    // Check if user data is in session storage on component mount
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      console.log("User data : ", userData)
+      setUser(JSON.parse(userData));
+    } else {
+      navigate('/login')
+    }
+  }, []);
+
   useEffect(() => {
     const fetchCourses = async () => {
       const q = query(collection(db, "courses"));
@@ -29,60 +43,6 @@ const Home = () => {
 
     fetchCourses();
   }, []);
-
-  const courses = [
-    {
-      title: "American Sign Language (ASL) Basics",
-      description: "11 July 2023 to 13 July 2024",
-      image: "https://source.unsplash.com/?nature",
-    },
-    {
-      title: "Deaf Culture and Community",
-      description: "15 August 2023 to 17 August 2024",
-      image: "https://source.unsplash.com/?technology",
-    },
-    {
-      title: "Accessibility in Web Design",
-      description: "22 September 2023 to 24 September 2024",
-      image: "https://source.unsplash.com/?business",
-    },
-    {
-      title: "Introduction to Closed Captioning",
-      description: "5 October 2023 to 7 October 2024",
-      image: "https://source.unsplash.com/?art",
-    },
-    {
-      title: "Educational Strategies for Teaching Deaf Learners",
-      description: "10 November 2023 to 12 November 2024",
-      image: "https://source.unsplash.com/?science",
-    },
-    {
-      title: "Sign Language Interpreting Techniques",
-      description: "15 December 2023 to 17 December 2024",
-      image: "https://source.unsplash.com/?science",
-    },
-    {
-      title: "Advances in Hearing Aid Technology",
-      description: "20 January 2024 to 22 January 2025",
-      image: "https://source.unsplash.com/?technology",
-    },
-    {
-      title: "Legal Rights and Advocacy for Deaf Individuals",
-      description: "25 February 2024 to 27 February 2025",
-      image: "https://source.unsplash.com/?technology",
-    },
-    {
-      title: "Accessible Film Production",
-      description: "3 March 2024 to 5 March 2025",
-      image: "https://source.unsplash.com/?technology",
-    },
-    {
-      title: "Empowerment through Visual Arts",
-      description: "8 April 2024 to 10 April 2025",
-      image: "https://source.unsplash.com/?art",
-    },
-    // Add more courses as needed
-  ];
 
   const carouselRef = useRef(null);
   const carouselRef2 = useRef(null);
@@ -158,15 +118,6 @@ const Home = () => {
               />
             </Link>
           ))}
-
-          {courses.map((course, index) => (
-            <CourseCard
-              key={index}
-              title={course.title}
-              description={course.description}
-              image={course.image}
-            />
-          ))}
         </div>
       </div>
       <div className="w-full mt-4">
@@ -198,15 +149,6 @@ const Home = () => {
                 image={course.thumbnail}
               />
             </Link>
-          ))}
-
-          {courses.map((course, index) => (
-            <CourseCard
-              key={index}
-              title={course.title}
-              description={course.description}
-              image={course.image}
-            />
           ))}
         </div>
       </div>

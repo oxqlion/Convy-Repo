@@ -27,7 +27,7 @@ const CourseDetail = () => {
 
         if (!user) {
             navigate('/login')
-        } 
+        }
 
         console.log("Course ID: ", courseId);
 
@@ -53,8 +53,8 @@ const CourseDetail = () => {
     useEffect(() => {
         if (!user) {
             navigate('/login')
-        } 
-            
+        }
+
         if (user.email !== course?.createdBy && course) {
             const checkCallExists = async () => {
                 try {
@@ -89,37 +89,8 @@ const CourseDetail = () => {
 
     const startCall = async () => {
         const callPeerId = Math.floor(100000 + Math.random() * 900000);
-
         setPeerId(callPeerId);
-        // await addDoc(collection(db, 'calls'), { courseId, callPeerId });
-
         navigate(`/meeting/${courseId}`);
-
-        // const peer = useRef(new Peer(callPeerId)).current
-
-        // peer.on('open', id => {
-        //     setRoomId(id)
-        // })
-
-        // peer.on('call', call => {
-        //     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        //         .then(stream => {
-        //             if (localVideoRef.current) {
-        //                 localVideoRef.current.srcObject = stream
-        //             }
-        //             call.answer(stream)
-
-        //             call.on('stream', remoteStream => {
-        //                 if (remoteVideoRef.current) {
-        //                     remoteVideoRef.current.srcObject = remoteStream
-        //                 }
-        //             })
-        //         })
-        //         .catch(err => {
-        //             console.log("Something went wrong on Join Room Use Effect : ", err)
-        //         })
-        // })
-
     };
 
     const renderButton = () => {

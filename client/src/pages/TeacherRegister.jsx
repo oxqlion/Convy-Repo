@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { db, fb_auth } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, setDoc, doc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
@@ -40,12 +40,20 @@ const TeacherRegister = () => {
       const userCredential = await createUserWithEmailAndPassword(
         fb_auth,
         email,
-        password,
+        password
       );
+      const user = userCredential.user;
+
       await addDoc(collection(db, "teachers"), {
         ...otherData,
         email,
       });
+
+      await setDoc(doc(db, "user", user.uid), {
+        email: user.email,
+        role: "Teacher",
+      });
+
       console.log("Form Data Submitted:", formData);
       alert("Registration successful");
       setFormData({
@@ -55,6 +63,7 @@ const TeacherRegister = () => {
         company: "",
         password: "",
         confirmPassword: "",
+        role: "Teacher",
       });
       navigate("/login");
     } catch (error) {
@@ -150,7 +159,7 @@ const TeacherRegister = () => {
               required
             />
           </div>
-          <div className="flex flex-row mb-4s">
+          <div className="flex flex-row mb-4">
             <input type="checkbox" id="agree" name="agree" />
             <p className="text-sm font-inter px-2 py-2">
               I agree to the terms & services

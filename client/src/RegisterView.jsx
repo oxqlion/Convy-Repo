@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { fb_auth } from "./firebaseConfig";
+import { fb_auth, db } from "./firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -21,7 +22,15 @@ const Register = () => {
     }
 
     try {
-      await createUserWithEmailAndPassword(fb_auth, email, password);
+      const userCred = await createUserWithEmailAndPassword(fb_auth, email, password);
+      const user = userCred.user;
+
+      // Add user data to Firestore
+      await setDoc(doc(db, "user", user.uid), {
+        email: user.email,
+        role: "Public"
+      });
+
       alert("Registered successfully!");
       navigate("/login");
     } catch (error) {
@@ -82,7 +91,6 @@ const Register = () => {
         <button
           onClick={handleRegister}
           className="w-full rounded-full py-2 border bg-button-color text-xl font-semibold"
-          // style={{ color: "#ffffff", border: "#000000" }}
         >
           Register
         </button>

@@ -39,7 +39,7 @@ const CreateCourse = () => {
             }
 
             const courseData = {
-                courseName,
+                courseName, // "courseName" : "nama course"
                 teacherName,
                 teacherBackground,
                 courseDescription,

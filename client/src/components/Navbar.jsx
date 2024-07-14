@@ -1,10 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUser } from "../UserContext";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, setUser } = useUser();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user data is in session storage on component mount
+    const userData = sessionStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, [setUser]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
   };
 
   return (
@@ -12,20 +30,29 @@ const Navbar = () => {
       <div className="w-full flex flex-row justify-between items-center px-6 py-4">
         <h2 className="text-3xl font-bold text-primary font-inter">Convy</h2>
         <div className="flex items-center space-x-6">
-          <li className="flex justify-center">
-            <a
-              href="/login"
-              className="border border-black focus:outline-none bg-primary p-2 rounded-lg text-white font-semibold hover:bg-blue-500 transition duration-300"
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="border border-black focus:outline-none bg-red-500 p-2 rounded-lg text-white font-semibold hover:bg-red-700 transition duration-300"
             >
-              Login
-            </a>
-            <a
-              href="/register"
-              className="border border-black focus:outline-none bg-blue-500 p-2 rounded-lg text-white font-semibold hover:bg-blue-700 transition duration-300 ml-2"
-            >
-              Register
-            </a>
-          </li>
+              Logout
+            </button>
+          ) : (
+            <div className="flex space-x-2">
+              <a
+                href="/login"
+                className="border border-black focus:outline-none bg-primary p-2 rounded-lg text-white font-semibold hover:bg-blue-500 transition duration-300"
+              >
+                Login
+              </a>
+              <a
+                href="/register"
+                className="border border-black focus:outline-none bg-blue-500 p-2 rounded-lg text-white font-semibold hover:bg-blue-700 transition duration-300"
+              >
+                Register
+              </a>
+            </div>
+          )}
           <button
             className="md:hidden block border border-black focus:outline-none bg-primary p-4 rounded-lg"
             onClick={toggleMenu}
@@ -58,20 +85,31 @@ const Navbar = () => {
         <li className="hover:text-blue-500 cursor-pointer">Class</li>
         <li className="hover:text-blue-500 cursor-pointer">Contacts</li>
         <li className="hover:text-blue-500 cursor-pointer">About Us</li>
-        <li className="flex justify-center">
-          <a
-            href="/login"
-            className="border border-black focus:outline-none bg-primary p-2 rounded-lg text-white font-semibold hover:bg-blue-500 transition duration-300"
-          >
-            Login
-          </a>
-          <a
-            href="/register"
-            className="border border-black focus:outline-none bg-blue-500 p-2 rounded-lg text-white font-semibold hover:bg-blue-700 transition duration-300 ml-2"
-          >
-            Register
-          </a>
-        </li>
+        {user ? (
+          <li className="flex justify-center">
+            <button
+              onClick={handleLogout}
+              className="border border-black focus:outline-none bg-red-500 p-2 rounded-lg text-white font-semibold hover:bg-red-700 transition duration-300"
+            >
+              Logout
+            </button>
+          </li>
+        ) : (
+          <li className="flex justify-center">
+            <a
+              href="/login"
+              className="border border-black focus:outline-none bg-primary p-2 rounded-lg text-white font-semibold hover:bg-blue-500 transition duration-300"
+            >
+              Login
+            </a>
+            <a
+              href="/register"
+              className="border border-black focus:outline-none bg-blue-500 p-2 rounded-lg text-white font-semibold hover:bg-blue-700 transition duration-300 ml-2"
+            >
+              Register
+            </a>
+          </li>
+        )}
       </ul>
     </div>
   );

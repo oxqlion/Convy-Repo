@@ -11,6 +11,8 @@ const VideoCallView = () => {
 
   const { meetingId } = useParams()
 
+  const [paramId, setParamId] = useState('')
+
   const number = Math.floor(100000 + Math.random() * 900000);
   const peer = useRef(new Peer(number)).current
   // const peer = useRef(new Peer(number)).current
@@ -27,16 +29,17 @@ const VideoCallView = () => {
     peer.on('open', async id => {
       console.log("meetingId : ", meetingId)
       console.log("id parameter : ", id)
+      setParamId(id)
       await addDoc(collection(db, 'calls'), { meetingId, id });
       // setRoomId(id)
     })
 
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(stream => {
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
-        }
-      })
+    // navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    //   .then(stream => {
+    //     if (localVideoRef.current) {
+    //       localVideoRef.current.srcObject = stream
+    //     }
+    //   })
 
 
 
@@ -84,7 +87,7 @@ const VideoCallView = () => {
   }
 
   const captureFrameAndSend = async () => {
-    console.log("Capturing frame...");
+    // console.log("Capturing frame...");
 
     if (!canvasRef.current || !localVideoRef.current) return;
 
@@ -179,7 +182,7 @@ const VideoCallView = () => {
       <div className="App">
         <h1>Welcome To The Meeting</h1>
         <div>
-          <h2>Your ID: {meetingId}</h2>
+          <h2>Your ID: {paramId}</h2>
           {/* <input
             type="text"
             value={roomId}
@@ -197,7 +200,9 @@ const VideoCallView = () => {
         </div>
         <div>
           <h2>Remote Video</h2>
-          <video ref={remoteVideoRef} autoPlay playsInline />
+          {/* <video ref={remoteVideoRef} autoPlay playsInline /> */}
+          <video ref={remoteVideoRef} autoPlay playsInline muted style={{ width: '640px', height: '480px' }} />
+
         </div>
       </div>
     </div>

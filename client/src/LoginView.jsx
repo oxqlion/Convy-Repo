@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { fb_auth, db } from "./firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import {
@@ -21,6 +21,15 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    // Check if user data is in session storage on component mount
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+      navigate('/')
+    }
+  }, [setUser, navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -34,7 +43,7 @@ const Login = () => {
       const user = userCred.user;
 
       const q = query(
-        collection(db, "teachers"),
+        collection(db, "user"),
         where("email", "==", user.email),
       );
       const querySnapshot = await getDocs(q);
@@ -43,14 +52,18 @@ const Login = () => {
       if (!querySnapshot.empty) {
         const userData = querySnapshot.docs[0].data();
         setUser(userData);
+        sessionStorage.setItem('user', JSON.stringify(userData)); // Store user data in session storage
+
         if (userData.role === "Teacher") {
           navigate("/dashboard-teacher");
         } else {
           // Redirect to another route if needed
+          setUser(user);
+          sessionStorage.setItem('user', JSON.stringify(userData)); // Store user data in session storage
           navigate("/");
         }
       } else {
-        setError("User role not found");
+        console.log("User role not found");
         navigate("/");
       }
 
