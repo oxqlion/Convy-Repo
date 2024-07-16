@@ -33,7 +33,7 @@ const Navbar = () => {
           {user ? (
             <button
               onClick={handleLogout}
-              className="border border-black focus:outline-none bg-red-500 p-2 rounded-lg text-white font-semibold hover:bg-red-700 transition duration-300"
+              className="hidden md:block border border-black focus:outline-none bg-red-500 p-2 rounded-lg text-white font-semibold hover:bg-red-700 transition duration-300"
             >
               Logout
             </button>
@@ -75,18 +75,13 @@ const Navbar = () => {
         </div>
       </div>
       <ul
-        className={`${
-          isMenuOpen ? "block" : "hidden"
-        } md:hidden flex flex-col items-left space-y-6 pb-4 text-primary duration-300 ease-in-out font-inter transform px-8 font-semibold ${
-          isMenuOpen ? "translate-y-0" : "-translate-y-full"
-        }`}
+        className={`${isMenuOpen ? "block" : "hidden"
+          } md:hidden flex flex-col items-left space-y-6 pb-4 text-primary duration-300 ease-in-out font-inter transform px-8 font-semibold ${isMenuOpen ? "translate-y-0" : "-translate-y-full"
+          }`}
       >
-        <li className="hover:text-blue-500 cursor-pointer">Home</li>
-        <li className="hover:text-blue-500 cursor-pointer">Class</li>
-        <li className="hover:text-blue-500 cursor-pointer">Contacts</li>
-        <li className="hover:text-blue-500 cursor-pointer">About Us</li>
         {user ? (
-          <li className="flex justify-center">
+          <li className="flex justify-between">
+            <h1 className="text-black border border-black focus:outline-none bg-secondary p-2 rounded-lg font-semibold hover:opcaity-50 transition duration-300">Hello, {user.email}</h1>
             <button
               onClick={handleLogout}
               className="border border-black focus:outline-none bg-red-500 p-2 rounded-lg text-white font-semibold hover:bg-red-700 transition duration-300"
@@ -110,6 +105,10 @@ const Navbar = () => {
             </a>
           </li>
         )}
+        <li className="hover:text-blue-500 cursor-pointer">Home</li>
+        <li className="hover:text-blue-500 cursor-pointer">Class</li>
+        <li className="hover:text-blue-500 cursor-pointer">Contacts</li>
+        <li className="hover:text-blue-500 cursor-pointer">About Us</li>
       </ul>
     </div>
   );

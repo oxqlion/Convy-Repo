@@ -130,10 +130,10 @@ const CourseDetail = () => {
             <p><strong>Time:</strong> {course.courseTime || 'Time Not Available'}</p>
             <div>{renderButton()}</div> */}
 
-            <div className="w-screen h-screen font-inter">
+            <div className="w-screen h-full font-inter">
                 <Navbar />
-                <div className="w-full pt-16"></div>
-                <div className="w-full h-full p-6 flex justify-center items-start py-12">
+                {/* <div className="w-full pt-16"></div> */}
+                <div className="w-full h-full p-6 flex justify-center items-start pt-32 pb-8">
                     <div className="bg-slate-100 w-full md:w-2/3 lg:w-1/2 border border-black rounded-lg p-4">
                         <h1 className="text-2xl font-semibold mb-2">
                             {course.courseName || "Course Name Not Available"}
