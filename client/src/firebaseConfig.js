@@ -7,6 +7,14 @@ import { getStorage } from "firebase/storage"
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCOj4HgDa4dHhboPOCqrTgUOdSx1ooSzYA",
+  authDomain: "convy-a06d9.firebaseapp.com",
+  projectId: "convy-a06d9",
+  storageBucket: "convy-a06d9.appspot.com",
+  messagingSenderId: "177776972521",
+  appId: "1:177776972521:web:0edbb8c82c74f984751678"
+};
 // const firebaseConfig = {
 //   apiKey: "",
 //   authDomain: "",

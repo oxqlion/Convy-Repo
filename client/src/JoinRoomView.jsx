@@ -1,87 +1,119 @@
-import { useState, useRef, useEffect } from 'react'
-import { useParams } from 'react-router-dom';
-import Peer from 'peerjs'
-import './index.css';
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  where,
+} from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import Peer from "peerjs";
+import "./index.css";
 
 const JoinRoom = () => {
-  const { callId } = useParams()
+  const { callId } = useParams(); // Get courseId from URL
 
-  const [peerId, setPeerId] = useState(null)
-  const [roomId, setRoomId] = useState("")
-  const remoteVideoRef = useRef(null)
-  const localVideoRef = useRef(null)
-
-  // Generate a random 6-digit number
-  const number = Math.floor(100000 + Math.random() * 900000);
-
-  const peer = useRef(new Peer(number)).current
+  const [peerId, setPeerId] = useState("");
+  const [remotePeerId, setRemotePeerId] = useState("");
+  const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef(null);
+  const peerInstance = useRef(null);
 
   useEffect(() => {
-    console.log("The generated peer is : ", number)
+    const peer = new Peer();
+    peerInstance.current = peer;
 
-    peer.on('open', id => {
-      console.log("number : ", number)
-      console.log("id parameter : ", id)
-      setRoomId(id)
-    })
+    peer.on("open", (id) => {
+      console.log("My peer ID is: ", id);
+      setPeerId(id);
 
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream
-          }
-        })
+      saveTeacherPeerId(id);
+    });
 
-    peer.on('call', call => {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream
-          }
-          call.answer(stream)
+    peer.on("error", (error) => {
+      console.error("PeerJS error:", error);
+    });
 
-          call.on('stream', remoteStream => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        peer.on("call", (call) => {
+          call.answer(stream);
+          call.on("stream", (remoteStream) => {
             if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream
+              remoteVideoRef.current.srcObject = remoteStream;
             }
-          })
-        })
-        .catch(err => {
-          console.log("Something went wrong on Join Room Use Effect : ", err)
-        })
-    })
+          });
+        });
+      })
+      .catch((err) => {
+        console.error("Error accessing media devices:", err);
+      });
 
-  }, [peer])
+    return async () => {
+      try {
+        await updateDoc(doc(db, "calls", where("courseId", "==", callId)), {
+          status: "ended",
+          endedAt: serverTimestamp(),
+        });
+        console.log("Call ended for course: ", callId);
+      } catch (error) {
+        console.error("Error updating call status: ", error);
+      }
+      peer.destroy();
+    };
+  }, []);
 
   const makeCall = () => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(stream => {
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
-        }
-        const call = peer.call(roomId, stream)
+    const peer = peerInstance.current;
+    const stream = localVideoRef.current.srcObject;
+    if (!peer || !stream) {
+      console.error("Peer not initialized or local stream not available");
+      return;
+    }
 
-        call.on('stream', remoteStream => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream
-          }
-        })
-      })
-      .catch(err => {
-        console.log("Something wrong on Make Call : ", err)
-      })
-  }
+    const call = peer.call(remotePeerId, stream);
+    call.on("stream", (remoteStream) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+    });
+    call.on("error", (error) => {
+      console.error("Call error:", error);
+    });
+  };
+
+  const saveTeacherPeerId = async (teacherPeerId) => {
+    try {
+      const callsRef = collection(db, "calls");
+      const docRef = await addDoc(callsRef, {
+        courseId: callId,
+        teacherPeerId: teacherPeerId,
+        createdAt: serverTimestamp(),
+        status: "active",
+      });
+      console.log("Teacher's peer ID saved for course: ", callId);
+      console.log("Document written with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error saving teacher's peer ID: ", error);
+    }
+  };
 
   return (
-    <div className='flex flex-col p-12'>
+    <div className="flex flex-col p-12">
       <div className="App">
-        {/* <h1>PeerJS Video Call</h1> */}
         <div>
           <h2>Your ID: {peerId}</h2>
           <input
             type="text"
-            value={roomId}
-            onChange={e => setRoomId(e.target.value)}
+            value={remotePeerId}
+            onChange={(e) => setRemotePeerId(e.target.value)}
             placeholder="Enter peer ID to call"
           />
           <button onClick={makeCall}>Call</button>
@@ -97,6 +129,6 @@ const JoinRoom = () => {
       </div>
     </div>
   );
-}
+};
 
 export default JoinRoom;

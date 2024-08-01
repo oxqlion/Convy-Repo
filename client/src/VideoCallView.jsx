@@ -1,90 +1,121 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import Peer from 'peerjs';
-import { db } from './firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
-import './index.css';
-import axios from 'axios'
-
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+import Peer from "peerjs";
+import { db } from "./firebaseConfig";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import "./index.css";
+import axios from "axios";
 
 const VideoCallView = () => {
+  const { meetingId } = useParams();
 
-  const { meetingId } = useParams()
+  const [peerId, setPeerId] = useState("");
+  const [teacherPeerId, setTeacherPeerId] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
+  const [caption, setCaption] = useState("");
 
-  const [paramId, setParamId] = useState('')
-
-  const number = Math.floor(100000 + Math.random() * 900000);
-  const peer = useRef(new Peer(number)).current
-  // const peer = useRef(new Peer(number)).current
-
-  const remoteVideoRef = useRef(null)
-  const localVideoRef = useRef(null)
+  const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef(null);
+  const peerInstance = useRef(null);
   const canvasRef = useRef(null);
 
-  const [caption, setCaption] = useState('')
+  useEffect(() => {
+    console.log("Fetching teacher peer ID...");
+    const fetchTeacherPeerId = async () => {
+      try {
+        const callsRef = collection(db, "calls");
+        const q = query(
+          callsRef,
+          where("courseId", "==", meetingId),
+          where("status", "==", "active")
+        );
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Assuming there's only one matching document
+          const docData = querySnapshot.docs[0].data();
+          setTeacherPeerId(docData.teacherPeerId);
+          console.log("Teacher's peer ID:", docData.teacherPeerId);
+        } else {
+          console.log("No matching document found for meetingId:", meetingId);
+        }
+      } catch (error) {
+        console.error("Error fetching teacher's peer ID:", error);
+      }
+    };
+
+    fetchTeacherPeerId();
+  }, [meetingId]);
 
   useEffect(() => {
-    console.log("The generated peer is : ", meetingId)
+    console.log("Joining teacher room with peer ID: ", teacherPeerId);
 
-    peer.on('open', async id => {
-      console.log("meetingId : ", meetingId)
-      console.log("id parameter : ", id)
-      setParamId(id)
-      await addDoc(collection(db, 'calls'), { meetingId, id });
-      // setRoomId(id)
-    })
+    const peer = new Peer();
+    peerInstance.current = peer;
 
-    // navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    //   .then(stream => {
-    //     if (localVideoRef.current) {
-    //       localVideoRef.current.srcObject = stream
-    //     }
-    //   })
+    peer.on("open", (id) => {
+      console.log("Student's peer ID from parameter is: ", id);
+      setPeerId(id);
+      console.log("Saved student's peer ID is: ", peerId);
+      joinCall();
+    });
 
-
+    peer.on("error", (error) => {
+      console.error("PeerJS error:", error);
+    });
 
     setInterval(() => {
       captureFrameAndSend();
     }, 1000 / 30);
 
-    peer.on('call', call => {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
+    peer.on("call", (call) => {
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((stream) => {
           if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream
+            localVideoRef.current.srcObject = stream;
           }
-          call.answer(stream)
+          call.answer(stream);
 
-          call.on('stream', remoteStream => {
+          call.on("stream", (remoteStream) => {
             if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream
+              remoteVideoRef.current.srcObject = remoteStream;
             }
-          })
+          });
         })
-        .catch(err => {
-          console.log("Something went wrong on Join Room Use Effect : ", err)
-        })
-    })
-  }, [peer])
+        .catch((err) => {
+          console.log("Something went wrong on Join Room Use Effect : ", err);
+        });
+    });
+  }, [teacherPeerId]);
 
-  const makeCall = () => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(stream => {
+  const joinCall = () => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((stream) => {
         if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
+          localVideoRef.current.srcObject = stream;
         }
-        const call = peer.call(meetingId, stream)
 
-        call.on('stream', remoteStream => {
+        const call = peerInstance.current.call(teacherPeerId, stream);
+
+        call.on("stream", (remoteStream) => {
           if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream
+            remoteVideoRef.current.srcObject = remoteStream;
           }
-        })
+          setIsConnected(true);
+          console.log("Call established with teacher: ", isConnected);
+        });
+
+        call.on("close", () => {
+          setIsConnected(false);
+          console.log("Call established with teacher: ", isConnected);
+        });
       })
-      .catch(err => {
-        console.log("Something wrong on Make Call : ", err)
-      })
-  }
+      .catch((err) => {
+        console.error("Error accessing media devices:", err);
+      });
+  };
 
   const captureFrameAndSend = async () => {
     // console.log("Capturing frame...");
@@ -105,7 +136,7 @@ const VideoCallView = () => {
     // Get image data from canvas
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const grayscaleData = new Uint8ClampedArray(
-      imageData.width * imageData.height,
+      imageData.width * imageData.height
     );
 
     // Convert image to grayscale
@@ -149,65 +180,65 @@ const VideoCallView = () => {
       frame,
     });
     console.log("Prediction:", response.data);
-    setCaption(response.data)
-    // if (response.data[0] === 1) {
-    //   setCaption('hello')
-    // } else if (response.data[1] === 1) {
-    //   setCaption('thanks')
-    // } else if (response.data[2] === 1) {
-    //   setCaption('awesome')
-    // } else if (response.data[3] === 1) {
-    //   setCaption('ready')
-    // } else if (response.data[4] === 1) {
-    //   setCaption('i')
-    // } else if (response.data[5] === 1) {
-    //   setCaption('i love you')
-    // } else {
-    //   setCaption('undefined')
-    // }
-  };
+    setCaption(response.data);
 
-  const sendFrameToServer = async (frame) => {
-    try {
-      const response = await axios.post('http://127.0.0.1:5000/predict', { frame });
-      console.log('Prediction:', response.data);
-      // Handle prediction response as needed (update UI, etc.)
-    } catch (err) {
-      console.error("Error sending frame to server: ", err);
+    if (response.data[0] === 1) {
+      setCaption("hello");
+    } else if (response.data[1] === 1) {
+      setCaption("thanks");
+    } else if (response.data[2] === 1) {
+      setCaption("awesome");
+    } else if (response.data[3] === 1) {
+      setCaption("ready");
+    } else if (response.data[4] === 1) {
+      setCaption("i");
+    } else if (response.data[5] === 1) {
+      setCaption("i love you");
+    } else {
+      setCaption("undefined");
     }
   };
 
+  if (!teacherPeerId) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className='flex flex-col p-12'>
+    <div className="flex flex-col p-12">
       <div className="App">
         <h1>Welcome To The Meeting</h1>
         <div>
-          <h2>Your ID: {paramId}</h2>
-          {/* <input
-            type="text"
-            value={roomId}
-            onChange={e => setRoomId(e.target.value)}
-            placeholder="Enter peer ID to call"
-          />
-          <button>Call</button> */}
-          <button onClick={makeCall}>Call</button>
+          <button onClick={joinCall}>Call</button>
         </div>
         <div>
           <h2>Local Video</h2>
-          <video ref={localVideoRef} autoPlay playsInline muted style={{ width: '640px', height: '480px' }} />
-          <canvas ref={canvasRef} style={{ display: 'none', width: '640px', height: '480px' }} />
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{ width: "640px", height: "480px" }}
+          />
+          <canvas
+            ref={canvasRef}
+            style={{ display: "none", width: "640px", height: "480px" }}
+          />
           <h1>{caption}</h1>
         </div>
         <div>
           <h2>Remote Video</h2>
           {/* <video ref={remoteVideoRef} autoPlay playsInline /> */}
-          <video ref={remoteVideoRef} autoPlay playsInline muted style={{ width: '640px', height: '480px' }} />
-
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{ width: "640px", height: "480px" }}
+          />
         </div>
       </div>
     </div>
   );
-
-}
+};
 
 export default VideoCallView;
